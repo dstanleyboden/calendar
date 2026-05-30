@@ -161,14 +161,30 @@
             container.innerHTML = '<p>Loading...</p>';
             
             try {
-                const request = {
-                    'calendarId': 'primary',
-                    'timeMin': (new Date()).toISOString(),
-                    'showDeleted': false,
-                    'singleEvents': true,
-                    'maxResults': 10,
-                    'orderBy': 'startTime',
-                };
+                //const request = {
+                //    'calendarId': 'primary',
+                //    'timeMin': (new Date()).toISOString(),
+                //    'showDeleted': false,
+                //    'singleEvents': true,
+                //    'maxResults': 10,
+                //    'orderBy': 'startTime',
+                //};
+                // Set boundaries for the start and end of today
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0); // Midnight this morning
+            
+            const todayEnd = new Date();
+            todayEnd.setHours(23, 59, 59, 999); // Midnight tonight
+
+            const request = {
+                'calendarId': 'primary',
+                'timeMin': todayStart.toISOString(),
+                'timeMax': todayEnd.toISOString(), // New limit added here
+                'showDeleted': false,
+                'singleEvents': true,
+                'maxResults': 50, // Increased just in case you have a busy day!
+                'orderBy': 'startTime',
+            };
                 const response = await gapi.client.calendar.events.list(request);
                 const events = response.result.items;
 
