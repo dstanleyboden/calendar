@@ -15,7 +15,7 @@
             background-color: #ffffff;
             color: #595959;
             padding: 40px;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
@@ -57,7 +57,6 @@
             white-space: nowrap;
         }
 
-        /* The Dotted Line */
         .event-dots {
             flex-grow: 1;
             border-bottom: 3px dotted;
@@ -72,10 +71,52 @@
         /* Storyboard Footer */
         .footer-note {
             font-family: 'Caveat', cursive;
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: #595959;
-            margin-top: 80px;
-            text-align: left;
+            margin-top: 60px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* --- NEW: Packing List Boxes --- */
+        .packing-lists {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap; /* Allows them to stack on very small screens */
+        }
+
+        .packing-box {
+            flex: 1;
+            background-color: #f3f3f3; /* Light gray fill from your mockup */
+            border-radius: 20px;
+            padding: 40px 20px 20px 20px; /* Extra padding at the top for the name label */
+            position: relative;
+            min-height: 150px;
+        }
+
+        /* Box Outlines */
+        .box-jack { border: 2px solid #01ba01; }
+        .box-hannah { border: 2px solid #ff00ff; }
+
+        /* Name Labels in Top Right */
+        .box-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-family: 'Lexend', sans-serif;
+            font-weight: 200; /* Extra Light */
+            color: #595959;
+            font-size: 1.2rem;
+        }
+
+        /* Dynamic Description Text */
+        .box-content-item {
+            font-family: 'Lexend', sans-serif;
+            font-weight: 400; /* Normal */
+            color: #595959;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -93,6 +134,17 @@
 
         <div class="footer-note">
             What do I need to take with me to be successful today?
+        </div>
+
+        <div class="packing-lists">
+            <div class="packing-box box-jack">
+                <div class="box-label">Jack</div>
+                <div id="jack-content"></div>
+            </div>
+            <div class="packing-box box-hannah">
+                <div class="box-label">Hannah</div>
+                <div id="hannah-content"></div>
+            </div>
         </div>
     </div>
 
@@ -145,7 +197,6 @@
                 if (resp.error !== undefined) {
                     throw (resp);
                 }
-                // Hide the login button and show the dashboard layout
                 document.getElementById('login-controls').style.display = 'none';
                 document.getElementById('dashboard-content').style.display = 'block';
                 await listUpcomingEvents();
@@ -158,24 +209,27 @@
             }
         }
 
-        // Logic for determining row color based on the first letter
         function getEventColor(title) {
             const firstLetter = title.trim().charAt(0).toUpperCase();
             switch(firstLetter) {
-                case 'D': return '#4a86e8'; // Blue
-                case 'E': return '#9900ff'; // Purple
-                case 'J': return '#01ba01'; // Green
-                case 'H': return '#ff00ff'; // Pink
-                default:  return '#595959'; // Default Grey
+                case 'D': return '#4a86e8'; 
+                case 'E': return '#9900ff'; 
+                case 'J': return '#01ba01'; 
+                case 'H': return '#ff00ff'; 
+                default:  return '#595959'; 
             }
         }
 
         async function listUpcomingEvents() {
             const container = document.getElementById('events-container');
-            container.innerHTML = '<p style="text-align:center; font-family: Lexend;">Loading today\'s schedule...</p>';
+            const jackContainer = document.getElementById('jack-content');
+            const hannahContainer = document.getElementById('hannah-content');
+            
+            container.innerHTML = '<p style="text-align:center;">Loading today\'s schedule...</p>';
+            jackContainer.innerHTML = '';
+            hannahContainer.innerHTML = '';
             
             try {
-                // Set boundaries for the start and end of today
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
                 
@@ -195,23 +249,23 @@
                 const response = await gapi.client.calendar.events.list(request);
                 const events = response.result.items;
 
-                container.innerHTML = ''; // Clear loading text
+                container.innerHTML = ''; 
 
                 if (!events || events.length == 0) {
-                    container.innerHTML = '<p style="text-align:center; font-family: Lexend;">Nothing scheduled for today!</p>';
+                    container.innerHTML = '<p style="text-align:center;">Nothing scheduled for today!</p>';
                     return;
                 }
                 
                 events.forEach(event => {
                     const title = event.summary || 'Untitled Event';
+                    const firstLetter = title.trim().charAt(0).toUpperCase();
                     const eventColor = getEventColor(title);
                     
                     const when = event.start.dateTime || event.start.date;
                     const dateObj = new Date(when);
-                    
-                    // Format time cleanly (e.g., "9:00 AM")
                     const timeString = dateObj.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
                     
+                    // 1. Build the Timeline Event
                     const eventDiv = document.createElement('div');
                     eventDiv.className = 'event-item';
                     eventDiv.style.color = eventColor; 
@@ -222,6 +276,20 @@
                         <span class="event-time">${timeString}</span>
                     `;
                     container.appendChild(eventDiv);
+
+                    // 2. Build the Packing List content if a description exists
+                    if (event.description) {
+                        const descDiv = document.createElement('div');
+                        descDiv.className = 'box-content-item';
+                        // Google Calendar descriptions often have HTML formatting inside them natively
+                        descDiv.innerHTML = `<strong>${title}:</strong><br>${event.description}`;
+                        
+                        if (firstLetter === 'J') {
+                            jackContainer.appendChild(descDiv);
+                        } else if (firstLetter === 'H') {
+                            hannahContainer.appendChild(descDiv);
+                        }
+                    }
                 });
             } catch (err) {
                 container.innerHTML = `<p style="color:red; text-align:center;">Error fetching events: ${err.message}</p>`;
