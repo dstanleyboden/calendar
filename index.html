@@ -202,11 +202,7 @@
                 await listUpcomingEvents();
             };
 
-            if (gapi.client.getToken() === null) {
-                tokenClient.requestAccessToken({prompt: 'consent'});
-            } else {
-                tokenClient.requestAccessToken({prompt: ''});
-            }
+            tokenClient.requestAccessToken();
         }
 
         function getEventColor(title) {
