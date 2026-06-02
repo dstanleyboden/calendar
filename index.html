@@ -12,7 +12,7 @@
     <style>
         body {
             font-family: 'Lexend', sans-serif;
-            background-color: #ffffff;
+            background-color: #d9d9d9ff;
             color: #595959;
             padding: 40px;
             max-width: 1000px;
@@ -78,18 +78,20 @@
             margin-bottom: 20px;
         }
 
-        /* --- NEW: Packing List Boxes --- */
+        /* Packing List Boxes */
         .packing-lists {
             display: flex;
             gap: 30px;
             flex-wrap: wrap; /* Allows them to stack on very small screens */
         }
 
-        .packing-box {
+            .packing-box {
             flex: 1;
-            background-color: #f3f3f3; /* Light gray fill from your mockup */
+            /* This makes the box white, but 85% opaque so the background barely shows through */
+            background-color: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(5px); /* Adds a cool frosted glass effect */
             border-radius: 20px;
-            padding: 40px 20px 20px 20px; /* Extra padding at the top for the name label */
+            padding: 40px 20px 20px 20px;
             position: relative;
             min-height: 150px;
         }
