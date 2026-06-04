@@ -198,8 +198,27 @@
             maybeEnableButtons();
         }
 
-        function maybeEnableButtons() {
+function maybeEnableButtons() {
             if (gapiInited && gisInited) {
+                // 1. Check if we have a saved token in the browser's storage
+                const savedTokenStr = localStorage.getItem('calendar_token');
+                if (savedTokenStr) {
+                    const savedToken = JSON.parse(savedTokenStr);
+                    // 2. Check if the token is still valid (they expire after 1 hour)
+                    if (Date.now() < savedToken.expires - 60000) { 
+                        // Token is good! Apply it and load the dashboard instantly.
+                        gapi.client.setToken({ access_token: savedToken.token });
+                        document.getElementById('login-controls').style.display = 'none';
+                        document.getElementById('dashboard-content').style.display = 'block';
+                        listUpcomingEvents();
+                        return; // Stop here so we don't show the login button
+                    } else {
+                        // Token is expired, clear it out.
+                        localStorage.removeItem('calendar_token');
+                    }
+                }
+                
+                // 3. If no valid token is found, show the login button
                 document.getElementById('authorize_button').style.visibility = 'visible';
             }
         }
@@ -209,6 +228,13 @@
                 if (resp.error !== undefined) {
                     throw (resp);
                 }
+                
+                // Save the new token and its exact expiration time to local storage
+                localStorage.setItem('calendar_token', JSON.stringify({
+                    token: resp.access_token,
+                    expires: Date.now() + (resp.expires_in * 1000)
+                }));
+
                 document.getElementById('login-controls').style.display = 'none';
                 document.getElementById('dashboard-content').style.display = 'block';
                 await listUpcomingEvents();
