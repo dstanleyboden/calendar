@@ -12,7 +12,7 @@
     <style>
         body {
             font-family: 'Lexend', sans-serif;
-            background-color: #d9d9d9ff;
+            background-color: #ffffff;
             color: #595959;
             padding: 40px;
             max-width: 1000px;
@@ -82,14 +82,12 @@
         .packing-lists {
             display: flex;
             gap: 30px;
-            flex-wrap: wrap; /* Allows them to stack on very small screens */
+            flex-wrap: wrap;
         }
 
-            .packing-box {
+        .packing-box {
             flex: 1;
-            /* This makes the box white, but 85% opaque so the background barely shows through */
-            background-color: rgba(255, 255, 255, 0.85); 
-            backdrop-filter: blur(5px); /* Adds a cool frosted glass effect */
+            background-color: #f3f3f3;
             border-radius: 20px;
             padding: 40px 20px 20px 20px;
             position: relative;
@@ -106,7 +104,7 @@
             top: 15px;
             right: 25px;
             font-family: 'Lexend', sans-serif;
-            font-weight: 200; /* Extra Light */
+            font-weight: 200;
             color: #595959;
             font-size: 1.2rem;
         }
@@ -114,11 +112,20 @@
         /* Dynamic Description Text */
         .box-content-item {
             font-family: 'Lexend', sans-serif;
-            font-weight: 400; /* Normal */
+            font-weight: 400;
             color: #595959;
             font-size: 1rem;
             margin-bottom: 15px;
             line-height: 1.4;
+        }
+
+        /* Mobile Responsiveness Adjustments */
+        @media (max-width: 600px) {
+            body { padding: 20px; }
+            h1.main-heading { font-size: 2.8rem; margin-bottom: 30px; }
+            .event-item { font-size: 1.2rem; }
+            .footer-note { font-size: 1.5rem; }
+            .packing-lists { flex-direction: column; }
         }
     </style>
 </head>
@@ -154,10 +161,13 @@
     <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 
     <script>
-        // === REPLACE THESE WITH YOUR CREDENTIALS ===
+        // ===================================================
+        // LINE 1 & 2: CONFIGURATION LAYER 
+        // ===================================================
         const API_KEY = "AIzaSyBtl_YfFluC9pVI11tAoWjyF0upT7Dses0";
         const CLIENT_ID = "747390244463-oe1rfnhhb19cgkm3pfc2g6vakvs0sp1u.apps.googleusercontent.com";
         
+        // Internal Application Constants
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
 
@@ -218,6 +228,14 @@
             }
         }
 
+        function get12HourTime(dateTimeString) {
+            const dateObj = new Date(dateTimeString);
+            let hours = dateObj.getHours();
+            let minutes = dateObj.getMinutes().toString().padStart(2, '0');
+            hours = hours % 12 || 12;
+            return `${hours}:${minutes}`;
+        }
+
         async function listUpcomingEvents() {
             const container = document.getElementById('events-container');
             const jackContainer = document.getElementById('jack-content');
@@ -259,11 +277,13 @@
                     const firstLetter = title.trim().charAt(0).toUpperCase();
                     const eventColor = getEventColor(title);
                     
-                    const when = event.start.dateTime || event.start.date;
-                    const dateObj = new Date(when);
-                    const timeString = dateObj.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+                    let timeDisplay = 'All Day';
+                    if (event.start.dateTime && event.end.dateTime) {
+                        const startStr = get12HourTime(event.start.dateTime);
+                        const endStr = get12HourTime(event.end.dateTime);
+                        timeDisplay = `${startStr} - ${endStr}`;
+                    }
                     
-                    // 1. Build the Timeline Event
                     const eventDiv = document.createElement('div');
                     eventDiv.className = 'event-item';
                     eventDiv.style.color = eventColor; 
@@ -271,15 +291,13 @@
                     eventDiv.innerHTML = `
                         <span class="event-title">${title}</span>
                         <span class="event-dots"></span>
-                        <span class="event-time">${timeString}</span>
+                        <span class="event-time">${timeDisplay}</span>
                     `;
                     container.appendChild(eventDiv);
 
-                    // 2. Build the Packing List content if a description exists
                     if (event.description) {
                         const descDiv = document.createElement('div');
                         descDiv.className = 'box-content-item';
-                        // Google Calendar descriptions often have HTML formatting inside them natively
                         descDiv.innerHTML = `<strong>${title}:</strong><br>${event.description}`;
                         
                         if (firstLetter === 'J') {
